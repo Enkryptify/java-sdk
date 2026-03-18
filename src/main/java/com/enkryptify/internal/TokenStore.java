@@ -23,7 +23,7 @@ public final class TokenStore {
         String token = store.get(provider);
         if (token == null) {
             throw new EnkryptifyException(
-                    "Invalid or destroyed auth provider. Create a new one via Enkryptify.fromEnv().\n" +
+                    "Invalid or destroyed auth provider. Create a new one via Enkryptify.fromEnv() or Enkryptify.fromKubernetes().\n" +
                     "Docs: https://docs.enkryptify.com/sdk/auth");
         }
         return token;

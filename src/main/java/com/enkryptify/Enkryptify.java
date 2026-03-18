@@ -24,6 +24,7 @@ public class Enkryptify implements AutoCloseable {
     private final SecretCache cache;
     private final EnkryptifyApi api;
     private final TokenExchangeManager tokenExchange;
+    private final KubernetesExchangeManager k8sExchange;
     private final EnkryptifyAuthProvider authProvider;
 
     private boolean eagerLoaded;
@@ -59,9 +60,12 @@ public class Enkryptify implements AutoCloseable {
             this.authProvider = new EnvAuthProvider();
         }
 
-        // Validate token format
-        String token = TokenStore.retrieve(authProvider);
-        validateTokenFormat(token);
+        // Validate token format (skip for Kubernetes auth — token is deferred)
+        boolean isKubernetesAuth = authProvider instanceof KubernetesAuthProvider;
+        if (!isKubernetesAuth) {
+            String token = TokenStore.retrieve(authProvider);
+            validateTokenFormat(token);
+        }
 
         // Initialize cache
         this.cache = cacheEnabled ? new SecretCache(config.cacheTtl()) : null;
@@ -69,11 +73,18 @@ public class Enkryptify implements AutoCloseable {
         // Initialize API client
         this.api = new EnkryptifyApi(config.baseUrl(), authProvider);
 
-        // Initialize token exchange if enabled
-        if (config.useTokenExchange()) {
-            this.tokenExchange = new TokenExchangeManager(token, config.baseUrl(), authProvider, logger);
+        // Initialize token exchange
+        if (isKubernetesAuth) {
+            this.tokenExchange = null;
+            this.k8sExchange = new KubernetesExchangeManager(
+                    workspace, config.baseUrl(), (KubernetesAuthProvider) authProvider, logger);
+        } else if (config.useTokenExchange()) {
+            this.k8sExchange = null;
+            this.tokenExchange = new TokenExchangeManager(
+                    TokenStore.retrieve(authProvider), config.baseUrl(), authProvider, logger);
         } else {
             this.tokenExchange = null;
+            this.k8sExchange = null;
         }
 
         logger.info("Initialized (workspace=" + workspace + ", project=" + project + ", environment=" + environment + ")");
@@ -81,6 +92,14 @@ public class Enkryptify implements AutoCloseable {
 
     public static EnkryptifyAuthProvider fromEnv() {
         return new EnvAuthProvider();
+    }
+
+    public static EnkryptifyAuthProvider fromKubernetes() {
+        return new KubernetesAuthProvider(null);
+    }
+
+    public static EnkryptifyAuthProvider fromKubernetes(String tokenPath) {
+        return new KubernetesAuthProvider(tokenPath);
     }
 
     public String get(String key) {
@@ -100,7 +119,9 @@ public class Enkryptify implements AutoCloseable {
         }
 
         // Ensure token is exchanged
-        if (tokenExchange != null) {
+        if (k8sExchange != null) {
+            k8sExchange.ensureToken();
+        } else if (tokenExchange != null) {
             tokenExchange.ensureToken();
         }
 
@@ -134,7 +155,9 @@ public class Enkryptify implements AutoCloseable {
             throw new EnkryptifyException("Cache is disabled. Enable it in the config to use preload().");
         }
 
-        if (tokenExchange != null) {
+        if (k8sExchange != null) {
+            k8sExchange.ensureToken();
+        } else if (tokenExchange != null) {
             tokenExchange.ensureToken();
         }
 
@@ -152,6 +175,9 @@ public class Enkryptify implements AutoCloseable {
     }
 
     public void destroy() {
+        if (k8sExchange != null) {
+            k8sExchange.destroy();
+        }
         if (tokenExchange != null) {
             tokenExchange.destroy();
         }
