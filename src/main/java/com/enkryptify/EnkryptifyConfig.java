@@ -12,13 +12,8 @@ public record EnkryptifyConfig(
         boolean usePersonalValues,
         boolean cacheEnabled,
         long cacheTtl,
-        boolean cacheEager,
-        LogLevel logLevel
+        boolean cacheEager
 ) {
-
-    public enum LogLevel {
-        DEBUG, INFO, WARN, ERROR
-    }
 
     public static Builder builder(String workspace, String project, String environment) {
         return new Builder(workspace, project, environment);
@@ -37,7 +32,6 @@ public record EnkryptifyConfig(
         private boolean cacheEnabled = true;
         private long cacheTtl = -1;
         private boolean cacheEager = true;
-        private LogLevel logLevel = LogLevel.INFO;
 
         private Builder(String workspace, String project, String environment) {
             this.workspace = workspace;
@@ -90,18 +84,12 @@ public record EnkryptifyConfig(
             return this;
         }
 
-        public Builder logLevel(LogLevel logLevel) {
-            this.logLevel = logLevel;
-            return this;
-        }
-
         public EnkryptifyConfig build() {
             return new EnkryptifyConfig(
                     workspace, project, environment,
                     auth, token, baseUrl, useTokenExchange,
                     strict, usePersonalValues,
-                    cacheEnabled, cacheTtl, cacheEager,
-                    logLevel
+                    cacheEnabled, cacheTtl, cacheEager
             );
         }
     }

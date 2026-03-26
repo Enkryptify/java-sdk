@@ -3,6 +3,8 @@ package com.enkryptify.internal;
 import com.enkryptify.exception.KubernetesAuthException;
 import com.enkryptify.internal.model.TokenExchangeResponse;
 import com.google.gson.Gson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -14,10 +16,11 @@ import java.util.concurrent.*;
 
 public class KubernetesExchangeManager {
 
+    private static final Logger logger = LoggerFactory.getLogger(KubernetesExchangeManager.class);
+
     private final String workspaceId;
     private final String baseUrl;
     private final KubernetesAuthProvider auth;
-    private final Logger logger;
     private final HttpClient httpClient;
     private final Gson gson;
     private final ScheduledExecutorService scheduler;
@@ -28,11 +31,10 @@ public class KubernetesExchangeManager {
     private volatile boolean needsExchange = true;
 
     public KubernetesExchangeManager(String workspaceId, String baseUrl,
-                                     KubernetesAuthProvider auth, Logger logger) {
+                                     KubernetesAuthProvider auth) {
         this.workspaceId = workspaceId;
         this.baseUrl = baseUrl;
         this.auth = auth;
-        this.logger = logger;
         this.httpClient = HttpClient.newHttpClient();
         this.gson = new Gson();
         this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {

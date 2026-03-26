@@ -6,6 +6,8 @@ import com.enkryptify.exception.SecretNotFoundException;
 import com.enkryptify.internal.*;
 import com.enkryptify.internal.model.Secret;
 import com.enkryptify.internal.model.SecretValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,7 +22,8 @@ public class Enkryptify implements AutoCloseable {
     private final boolean cacheEnabled;
     private final boolean cacheEager;
 
-    private final Logger logger;
+    private static final Logger logger = LoggerFactory.getLogger(Enkryptify.class);
+
     private final SecretCache cache;
     private final EnkryptifyApi api;
     private final TokenExchangeManager tokenExchange;
@@ -49,8 +52,6 @@ public class Enkryptify implements AutoCloseable {
         this.cacheEnabled = config.cacheEnabled();
         this.cacheEager = config.cacheEager();
 
-        this.logger = new Logger(config.logLevel());
-
         // Resolve auth provider: token option → auth option → env fallback
         if (config.token() != null && !config.token().isBlank()) {
             this.authProvider = new TokenAuthProvider(config.token());
@@ -77,11 +78,11 @@ public class Enkryptify implements AutoCloseable {
         if (isKubernetesAuth) {
             this.tokenExchange = null;
             this.k8sExchange = new KubernetesExchangeManager(
-                    workspace, config.baseUrl(), (KubernetesAuthProvider) authProvider, logger);
+                    workspace, config.baseUrl(), (KubernetesAuthProvider) authProvider);
         } else if (config.useTokenExchange()) {
             this.k8sExchange = null;
             this.tokenExchange = new TokenExchangeManager(
-                    TokenStore.retrieve(authProvider), config.baseUrl(), authProvider, logger);
+                    TokenStore.retrieve(authProvider), config.baseUrl(), authProvider);
         } else {
             this.tokenExchange = null;
             this.k8sExchange = null;

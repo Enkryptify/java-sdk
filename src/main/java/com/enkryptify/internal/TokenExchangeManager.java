@@ -3,6 +3,8 @@ package com.enkryptify.internal;
 import com.enkryptify.EnkryptifyAuthProvider;
 import com.enkryptify.internal.model.TokenExchangeResponse;
 import com.google.gson.Gson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -13,10 +15,11 @@ import java.util.concurrent.*;
 
 public class TokenExchangeManager {
 
+    private static final Logger logger = LoggerFactory.getLogger(TokenExchangeManager.class);
+
     private final String staticToken;
     private final String baseUrl;
     private final EnkryptifyAuthProvider authProvider;
-    private final Logger logger;
     private final HttpClient httpClient;
     private final Gson gson;
     private final ScheduledExecutorService scheduler;
@@ -26,11 +29,10 @@ public class TokenExchangeManager {
     private volatile boolean destroyed;
 
     public TokenExchangeManager(String staticToken, String baseUrl,
-                                EnkryptifyAuthProvider authProvider, Logger logger) {
+                                EnkryptifyAuthProvider authProvider) {
         this.staticToken = staticToken;
         this.baseUrl = baseUrl;
         this.authProvider = authProvider;
-        this.logger = logger;
         this.httpClient = HttpClient.newHttpClient();
         this.gson = new Gson();
         this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {

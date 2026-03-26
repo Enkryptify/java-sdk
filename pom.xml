@@ -6,7 +6,7 @@
 
     <groupId>com.enkryptify</groupId>
     <artifactId>java-sdk</artifactId>
-    <version>0.1.1</version>
+    <version>0.2.0</version>
     <packaging>jar</packaging>
 
     <name>Enkryptify Java SDK</name>
@@ -47,6 +47,11 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.11.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.16</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
